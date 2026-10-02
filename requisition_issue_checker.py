@@ -38,7 +38,7 @@ class CheckResult:
     sku_summary: pd.DataFrame
     sku_mismatches: pd.DataFrame
     duplicate_issue_rows: pd.DataFrame
-    non_numeric_locations: pd.DataFrame
+    missing_locations: pd.DataFrame
 
     @property
     def is_valid(self) -> bool:
@@ -151,25 +151,25 @@ def run_cross_check(
             "Investigate duplicate issue rows with the same SKU and quantity unless they should be separated by unique expiry or lot details."
         )
 
-    non_numeric_locations = find_non_numeric_issue_locations(issue_prepared)
-    location_valid = non_numeric_locations.empty
+    missing_locations = find_missing_issue_locations(issue_prepared)
+    location_valid = missing_locations.empty
     add_check(
         checks,
-        "Issue location format",
+        "Issue location completeness",
         location_valid,
-        "All issue locations start with a numeric warehouse location."
+        "All issue rows have a recorded location."
         if location_valid
-        else f"{len(non_numeric_locations)} issue row(s) have missing or non-numeric locations.",
+        else f"{len(missing_locations)} issue row(s) have missing locations.",
     )
     if not location_valid:
         next_steps.append(
-            "Verify issue rows with missing or non-numeric locations and remove or correct them before picking if necessary."
+            "Verify issue rows with missing locations and remove or correct them before picking if necessary."
         )
 
     flags = (
         sku_flags(sku_mismatches)
         + duplicate_issue_flags(duplicate_issue_rows)
-        + non_numeric_location_flags(non_numeric_locations)
+        + missing_location_flags(missing_locations)
     )
 
     return CheckResult(
@@ -186,7 +186,7 @@ def run_cross_check(
         sku_summary=sku_summary,
         sku_mismatches=sku_mismatches,
         duplicate_issue_rows=duplicate_issue_rows,
-        non_numeric_locations=non_numeric_locations,
+        missing_locations=missing_locations,
     )
 
 
@@ -344,11 +344,8 @@ def normalize_expiry_lot_value(value: object) -> str:
     return text.upper()
 
 
-def find_non_numeric_issue_locations(issue_df: pd.DataFrame) -> pd.DataFrame:
-    flagged = issue_df[
-        issue_df["_Location Key"].eq("")
-        | ~issue_df["_Location Key"].str.match(r"^\d")
-    ].copy()
+def find_missing_issue_locations(issue_df: pd.DataFrame) -> pd.DataFrame:
+    flagged = issue_df[issue_df["_Location Key"].eq("")].copy()
     if flagged.empty:
         return pd.DataFrame(columns=["Issue Row", "Issue Line", "SKU", "Issue Quantity", "From Bin"])
 
@@ -389,14 +386,12 @@ def duplicate_issue_flags(duplicate_issue_rows: pd.DataFrame) -> list[str]:
     return flags
 
 
-def non_numeric_location_flags(non_numeric_locations: pd.DataFrame) -> list[str]:
+def missing_location_flags(missing_locations: pd.DataFrame) -> list[str]:
     flags = []
-    for _, row in non_numeric_locations.iterrows():
+    for _, row in missing_locations.iterrows():
         line_text = f", issue line {row['Issue Line']}" if row.get("Issue Line", "") != "" else ""
-        location = row.get("From Bin", "")
         flags.append(
-            f"Issue row {row['Issue Row']}{line_text}: SKU {row['SKU']} has non-numeric location "
-            f"'{location}'."
+            f"Issue row {row['Issue Row']}{line_text}: SKU {row['SKU']} is missing a location."
         )
     return flags
 
@@ -451,7 +446,7 @@ def empty_result(
         sku_summary=pd.DataFrame(columns=columns),
         sku_mismatches=pd.DataFrame(columns=columns),
         duplicate_issue_rows=pd.DataFrame(columns=columns),
-        non_numeric_locations=pd.DataFrame(columns=columns),
+        missing_locations=pd.DataFrame(columns=columns),
     )
 
 

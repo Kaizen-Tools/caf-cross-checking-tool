@@ -214,7 +214,11 @@ def render_result(result: CheckResult) -> None:
 
     sku_mismatches = getattr(result, "sku_mismatches", pd.DataFrame())
     duplicate_issue_rows = getattr(result, "duplicate_issue_rows", pd.DataFrame())
-    non_numeric_locations = getattr(result, "non_numeric_locations", pd.DataFrame())
+    missing_locations = getattr(
+        result,
+        "missing_locations",
+        getattr(result, "non_numeric_locations", pd.DataFrame()),
+    )
     effective_issue_rows = result.summary.get("effective_issue_rows", result.summary.get("issue_rows", 0))
 
     col1, col2, col3, col4 = st.columns(4)
@@ -240,9 +244,9 @@ def render_result(result: CheckResult) -> None:
             hide_index=True,
         )
 
-    with st.expander("Issue rows with non-numeric locations", expanded=not non_numeric_locations.empty):
+    with st.expander("Issue rows with missing locations", expanded=not missing_locations.empty):
         st.dataframe(
-            style_location_rows(non_numeric_locations),
+            style_location_rows(missing_locations),
             width="stretch",
             hide_index=True,
         )

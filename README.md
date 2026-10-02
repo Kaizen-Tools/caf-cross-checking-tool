@@ -15,7 +15,7 @@ The app is designed for GitHub deployment to Streamlit Cloud and follows the sam
 1. Upload one requisition Excel export.
 2. Upload the matching issue Excel export.
 3. Run the cross-check.
-4. Review the colour-coded checklist and any flagged SKU quantity differences, duplicate issue rows, or non-numeric issue locations.
+4. Review the colour-coded checklist and any flagged SKU quantity differences, duplicate issue rows, or missing issue locations.
 
 ## Business Rules
 
@@ -38,7 +38,8 @@ Validation rules:
 - SKU quantities are compared by total quantity across the full document.
 - Issue rows with the same SKU and same issue quantity are allowed when they have unique expiry/lot details.
 - Matching issue rows without unique expiry/lot details are flagged as potential customer input errors.
-- Issue rows with missing or non-numeric `From Bin` locations, such as `UNDER QUERY` or `OH GOODS OUT`, are flagged for verification/removal.
+- Issue rows with missing `From Bin` locations are flagged for verification/removal.
+- Non-numeric `From Bin` locations, such as `UNDER QUERY` or `OH GOODS OUT`, are allowed.
 - Requisition is treated as the client request and source of truth for investigation.
 - Requisition `Status` is ignored.
 
