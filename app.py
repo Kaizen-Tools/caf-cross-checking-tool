@@ -212,32 +212,37 @@ def render_result(result: CheckResult) -> None:
     else:
         st.error("Flagged: adjustments or investigation are required before moving forward.")
 
+    sku_mismatches = getattr(result, "sku_mismatches", pd.DataFrame())
+    duplicate_issue_rows = getattr(result, "duplicate_issue_rows", pd.DataFrame())
+    non_numeric_locations = getattr(result, "non_numeric_locations", pd.DataFrame())
+    effective_issue_rows = result.summary.get("effective_issue_rows", result.summary.get("issue_rows", 0))
+
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Requisition rows", result.summary["requisition_rows"])
     col2.metric("Issue raw rows", result.summary["issue_rows"])
-    col3.metric("Issue effective rows", result.summary["effective_issue_rows"])
+    col3.metric("Issue effective rows", effective_issue_rows)
     col4.metric("Flags", len(result.flags))
 
     st.subheader("4. Preview and Summary")
     render_checklist(result)
 
-    with st.expander("SKU quantity comparison", expanded=not result.sku_mismatches.empty):
+    with st.expander("SKU quantity comparison", expanded=not sku_mismatches.empty):
         st.dataframe(
             style_sku_summary(result.sku_summary),
             width="stretch",
             hide_index=True,
         )
 
-    with st.expander("Duplicate issue SKU/quantity rows", expanded=not result.duplicate_issue_rows.empty):
+    with st.expander("Duplicate issue SKU/quantity rows", expanded=not duplicate_issue_rows.empty):
         st.dataframe(
-            style_duplicate_issue_rows(result.duplicate_issue_rows),
+            style_duplicate_issue_rows(duplicate_issue_rows),
             width="stretch",
             hide_index=True,
         )
 
-    with st.expander("Issue rows with non-numeric locations", expanded=not result.non_numeric_locations.empty):
+    with st.expander("Issue rows with non-numeric locations", expanded=not non_numeric_locations.empty):
         st.dataframe(
-            style_location_rows(result.non_numeric_locations),
+            style_location_rows(non_numeric_locations),
             width="stretch",
             hide_index=True,
         )
