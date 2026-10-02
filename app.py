@@ -67,9 +67,10 @@ def main() -> None:
         st.markdown(
             """
 - One requisition file is checked against one issue file.
-- Row counts must match across the two sheets.
+- Row counts must match after valid expiry/lot issue splits are counted as one effective issue row.
 - SKU quantities are compared by total quantity across the whole document.
-- Issue rows with the same SKU and same issue quantity are flagged as potential customer input errors.
+- Issue rows with the same SKU and same issue quantity are allowed when they have unique expiry/lot details.
+- Matching issue rows without unique expiry/lot details are flagged as potential customer input errors.
 - Requisition is treated as the client request and source of truth for investigation.
             """
         )
@@ -211,10 +212,11 @@ def render_result(result: CheckResult) -> None:
     else:
         st.error("Flagged: adjustments or investigation are required before moving forward.")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Requisition rows", result.summary["requisition_rows"])
-    col2.metric("Issue rows", result.summary["issue_rows"])
-    col3.metric("Flags", len(result.flags))
+    col2.metric("Issue raw rows", result.summary["issue_rows"])
+    col3.metric("Issue effective rows", result.summary["effective_issue_rows"])
+    col4.metric("Flags", len(result.flags))
 
     st.subheader("4. Preview and Summary")
     render_checklist(result)

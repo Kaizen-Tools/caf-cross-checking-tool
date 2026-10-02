@@ -34,9 +34,10 @@ Required issue columns:
 
 Validation rules:
 
-- The number of data rows must match across both sheets.
+- The number of data rows must match after valid expiry/lot Issue splits are counted as one effective Issue row.
 - SKU quantities are compared by total quantity across the full document.
-- Issue rows with the same SKU and same issue quantity are flagged as potential customer input errors.
+- Issue rows with the same SKU and same issue quantity are allowed when they have unique expiry/lot details.
+- Matching issue rows without unique expiry/lot details are flagged as potential customer input errors.
 - Issue rows with missing or non-numeric `From Bin` locations, such as `UNDER QUERY` or `OH GOODS OUT`, are flagged for verification/removal.
 - Requisition is treated as the client request and source of truth for investigation.
 - Requisition `Status` is ignored.
@@ -48,7 +49,7 @@ The app displays:
 - A green/red validation checklist.
 - Summary metrics for requisition row count, issue row count, and total flags.
 - A SKU quantity comparison table.
-- A duplicate issue SKU/quantity row table.
+- A duplicate issue SKU/quantity row table, excluding valid expiry/lot splits.
 - An issue location exception table.
 - Plain-English next steps for any flagged checks.
 
